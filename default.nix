@@ -1,6 +1,5 @@
 # Build with
-#   nix-build -A system -A config.system.build.tarball ./nixos.nix
-
+#   nix-build -A system -A config.system.build.tarball --show-trace
 let
     # Snapshots of specific git revisions used to compose the system
     snapshots = rec {
@@ -15,10 +14,12 @@ let
     };
     # Imported nix expressions.
     nix = rec {
-        pkgs = import snapshots.nixpkgs;
+        pkgs = import snapshots.nixpkgs {};
         os = import "${snapshots.nixpkgs}/nixos";
     };
     profile = "${snapshots.nixpkgs}/nixos/modules/profiles/minimal.nix";
+    make-system-tarball = import "${snapshots.nixpkgs}/nixos/lib/make-system-tarball.nix";
+
     # The end configuration of the VM
     personality = rec {
         configuration = {
@@ -30,13 +31,13 @@ let
             environment.etc."resolv.conf".enable = false;
             networking.dhcpcd.enable = false;
 
-            system.build.tarball = nix.pkgs.callPackage "${snapshots.nixpkgs}/nixos/lib/make-system-tarball.nix" {
+            system.build.tarball = make-system-tarball {
+                stdenv = nix.pkgs.stdenv;
+                closureInfo = nix.pkgs.closureInfo;
+                pixz = nix.pkgs.pixz;
+
                 contents = [];
-                storeContents = nix.pkgs.pkgs2storeContents [
-                    nix.config.system.build.toplevel
-                    nix.pkgs.stdenv
-                    nix.pkgs.channelSources
-                ];
+                storeContents = [];
                 extraCommands = "";
                 compressCommand = "gzip";
                 compressionExtension = ".gz";
@@ -44,5 +45,5 @@ let
         };
         system = "x86_64-linux";
     };
-in
-nix.os personality
+
+in nix.os personality
