@@ -1,4 +1,4 @@
-{ lib, pkgs, config, defaultUser, ... }:
+{ lib, pkgs, config, defaultUser ? "nixos", ... }:
 
 pkgs.substituteAll {
   name = "syschdemd";
@@ -10,6 +10,8 @@ pkgs.substituteAll {
 
   inherit (pkgs) daemonize;
   inherit defaultUser;
-  inherit (config.security) wrapperDir;
-  fsPackagesPath = lib.makeBinPath config.system.fsPackages;
+  # TODO: flake packages can't access `config.security`.
+  # inherit (config.security) wrapperDir;
+  # TODO: flake packages can't access `config.system`.
+  # fsPackagesPath = lib.makeBinPath config.system.fsPackages;
 }

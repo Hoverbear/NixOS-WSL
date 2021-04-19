@@ -14,12 +14,21 @@
         ];
         specialArgs = { inherit nixpkgs; };
       };
+
+      overlay = final: prev: {
+        syschdemd = (final.callPackage ./syschdemd.nix { });
+      };
     } //
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ self.overlay ];
+        };
       in
       {
+        packages.syschdemd = pkgs.syschdemd;
+
         checks.check-format = pkgs.runCommand "check-format"
           {
             buildInputs = with pkgs; [ nixpkgs-fmt ];
